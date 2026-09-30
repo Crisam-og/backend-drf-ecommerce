@@ -1,0 +1,12 @@
+# Entornos virtuales (Excluye la carpeta donde instalaste los paquetes)
+venv/
+.venv/
+env/
+# Archivos compilados de Python
+**/__pycache__/
+*.pyc
+# Archivos de entorno y credenciales secretas
+.env
+*.env
+# Base de datos local (Por si usas SQLite en desarrollo)
+*.sqlite3

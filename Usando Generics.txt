@@ -1,0 +1,121 @@
+from rest_framework import generics, filters
+
+class ProductoListCreateApi(generics.ListCreateAPIView):
+    queryset = ProductoModel.objects.order_by('nombre')
+    pagination_class = ProductoPagination
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['nombre']
+
+    # 1. Le decimos qué serializador usar por defecto (para listar y responder al crear)
+    serializer_class = ProductoSerializer
+
+    # 2. Dinámicamente cambiamos al serializador de registro solo cuando la petición sea POST
+    def get_serializer_class(self):
+        if self.request.method == 'POST':
+            return RegistroProductoSerializer
+        return super().get_serializer_class()
+
+    # 3. DRF por defecto responde con el mismo serializador que usó para guardar. 
+    # Como tú quieres responder con 'ProductoSerializer', interceptamos el guardado:
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True) # Devuelve un 400 automático si falla
+        producto = serializer.save()
+        
+        # Respondemos usando el serializador de salida
+        response_serializer = ProductoSerializer(producto)
+        return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+
+class ProductoDetailUpdateDestroyApi(generics.RetrieveUpdateDestroyAPIView):
+    queryset = ProductoModel.objects.all()
+    serializer_class = ProductoSerializer
+    
+    # Indicamos que tu llave primaria personalizada es 'producto_id' en lugar de 'id'
+    lookup_field = 'producto_id' 
+
+    # Cambiamos el serializador dinámicamente si van a actualizar (PUT)
+    def get_serializer_class(self):
+        if self.request.method in ['PUT', 'PATCH']:
+            return ActualizarProductoSerializer
+        return super().get_serializer_class()
+
+    # Personalizamos la respuesta del PUT para que use el ProductoSerializer de salida
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        producto_actualizado = serializer.save()
+        
+        response_serializer = ProductoSerializer(producto_actualizado)
+        return Response(response_serializer.data, status=status.HTTP_200_OK)
+
+    # Personalizamos el mensaje de eliminación si quieres mantener tu texto exacto
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        return Response({'message': 'Producto eliminado exitosamente.'}, status=status.HTTP_200_OK)
+
+from django.urls import path
+from .views import ProductoListCreateApi, ProductoDetailUpdateDestroyApi
+
+urlpatterns = [
+    # GET para listar / POST para crear
+    path('producto/', ProductoListCreateApi.as_view(), name='producto-list-create'),
+    
+    # GET para detalle / PUT para editar / DELETE para eliminar
+    path('producto/<int:producto_id>/', ProductoDetailUpdateDestroyApi.as_view(), name='producto-detail-update-destroy'),
+]
+
+import axios from 'axios'; // Asegúrate de importar axios o usar tu instancia configurada
+
+// Configuración de la URL base si la tienes separada, ej: axios.defaults.baseURL = 'http://...';
+
+/**
+ * 1. OBTENER PRODUCTOS (Paginados y con opción de búsqueda)
+ * Método: GET
+ * URL: producto/?page=X&search=Y
+ */
+export const getProductRequest = (busqueda = "", pagina = 1) => {
+  const params = {};
+  if (busqueda) params.search = busqueda;
+  if (pagina > 1) params.page = pagina;
+
+  return axios.get("producto/", { params });
+};
+
+/**
+ * 2. CREAR UN PRODUCTO
+ * Método: POST
+ * URL: producto/
+ */
+export const createProductRequest = (newProductData) => {
+  return axios.post("producto/", newProductData);
+};
+
+/**
+ * 3. OBTENER DETALLE DE UN PRODUCTO
+ * Método: GET
+ * URL: producto/:id/
+ */
+export const getProductDetailRequest = (productoId) => {
+  return axios.get(`producto/${productoId}/`);
+};
+
+/**
+ * 4. ACTUALIZAR UN PRODUCTO
+ * Método: PUT
+ * URL: producto/:id/
+ */
+export const updateProductRequest = (productoId, updatedProductData) => {
+  return axios.put(`producto/${productoId}/`, updatedProductData);
+};
+
+/**
+ * 5. ELIMINAR UN PRODUCTO
+ * Método: DELETE
+ * URL: producto/:id/
+ */
+export const deleteProductRequest = (productoId) => {
+  return axios.delete(`producto/${productoId}/`);
+};
