@@ -2,9 +2,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.pagination import PageNumberPagination
-from api.serializers.producto.serializer import ProductoSerializer, RegistroProductoSerializer, RegistroCategoriaSerializer, ActualizarProductoSerializer, CategoriaSerializer
-from api.models.producto.models import ProductoModel, CategoriaModel
-from django.db.models import Count
+from api.serializers.producto.serializer import ProductoSerializer, RegistroProductoSerializer, ActualizarProductoSerializer
+from api.models.producto.models import ProductoModel
 
 class RegistroProductoApi(APIView):
     def post(self, request):
@@ -27,7 +26,7 @@ class ListarProductosApi(APIView):
         # Permite controlar el tamaño de página mediante ?page_size=; se limita
         # para evitar respuestas excesivamente grandes.
         paginator = PageNumberPagination()
-        paginator.page_size = 5
+        paginator.page_size = 10
         paginator.page_size_query_param = 'page_size'
         paginator.max_page_size = 100
         pagina_productos = paginator.paginate_queryset(productos, request, view=self)
@@ -73,51 +72,17 @@ class DetalleProductoApi(APIView):
         
         serializer = ProductoSerializer(producto)
         return Response(serializer.data, status=status.HTTP_200_OK)
-    
-class RegistroCategoriaApi(APIView):
-    def post(self, request):
-        serializer = RegistroCategoriaSerializer(data=request.data)
-        if serializer.is_valid():
-            categoria = serializer.save()
-            return Response(RegistroCategoriaSerializer(categoria).data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-class ListarCategoriasApi(APIView):
-    def get(self, request):
-        categorias = CategoriaModel.objects.annotate(product_count=Count('productos'))
-        serializer = CategoriaSerializer(categorias, many=True)
-        data = {
-                'message': 'Lista de categorías obtenida exitosamente.',
-                'data' : serializer.data,
-            }   
-        return Response(data, status=status.HTTP_200_OK)
-    
-class ListarProductosApi(APIView):
-    def get(self, request):
-        productos = ProductoModel.objects.order_by('nombre')
-        search_query = request.query_params.get('search', None)
-        
-        if search_query:
-            productos = productos.filter(nombre__icontains=search_query)
 
-        # Permite controlar el tamaño de página mediante ?page_size=; se limita
-        # para evitar respuestas excesivamente grandes.
-        paginator = PageNumberPagination()
-        paginator.page_size = 5
-        paginator.page_size_query_param = 'page_size'
-        paginator.max_page_size = 100
-        pagina_productos = paginator.paginate_queryset(productos, request, view=self)
-        serializer = ProductoSerializer(pagina_productos, many=True)
-        return Response({
-            'message': 'Lista de productos obtenida exitosamente.',
-            'data': serializer.data,
-            'total_productos': paginator.page.paginator.count,
-            'page': paginator.page.number,
-            'page_size': paginator.get_page_size(request),
-            'total_paginas': paginator.page.paginator.num_pages,
-            'next': paginator.get_next_link(),
-            'previous': paginator.get_previous_link(),      
-            #'total_productos': productos.count()
-        }, status=status.HTTP_200_OK)
+
+# class RegistroCategoriaApi(APIView):
+#     def post(self, request):
+#         serializer = RegistroCategoriaSerializer(data=request.data)
+#         if serializer.is_valid():
+#             categoria = serializer.save()
+#             return Response(RegistroCategoriaSerializer(categoria).data, status=status.HTTP_201_CREATED)
+#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    
 
 # from rest_framework import generics, filters
 # from rest_framework.pagination import PageNumberPagination

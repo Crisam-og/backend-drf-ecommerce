@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 
 from pathlib import Path
 import os
+from datetime import timedelta
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -37,11 +38,34 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    "rest_framework_simplejwt",
+    "rest_framework_simplejwt.token_blacklist",
     "corsheaders",
     'solo',
     'rest_framework',
     'api',
 ]
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ),
+    "DEFAULT_THROTTLE_RATES": {
+        "login": "5/min",
+        "password_reset": "5/hour",
+        "password_reset_confirm": "60/hour",
+    },
+}
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=15),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
+    "ROTATE_REFRESH_TOKENS": True,
+    "BLACKLIST_AFTER_ROTATION": True,
+    "UPDATE_LAST_LOGIN": True,
+    "USER_ID_FIELD": "user_id",   # 👈 nombre de tu clave primaria
+    "USER_ID_CLAIM": "user_id",   # 👈 nombre del claim dentro del token
+
+}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -80,7 +104,7 @@ WSGI_APPLICATION = 'app.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'db_webcaocao',  # Nombre de la base de datos
+        'NAME': 'db_official',  # Nombre de la base de datos
         'USER': 'postgres',        # Usuario de PostgreSQL
         'PASSWORD': 'csog250802', # Contraseña del usuario
         'HOST': 'localhost',         # Servidor de la base de datos
@@ -107,8 +131,29 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+#Resetear contraseña
+FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:5173")
+PASSWORD_RESET_TIMEOUT = 60 * 60   # el enlace vence en 1 hora
+PASSWORD_RESET_COOLDOWN = 60       # segundos entre correos al mismo email
+DEFAULT_FROM_EMAIL = "Tu Tienda <no-reply@tudominio.com>"
+# REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"].update({
+#     "password_reset": "5/hour",
+#     "password_reset_confirm": "20/hour",
+# })
+if DEBUG:
+    # El correo se imprime en la terminal de Django, sin necesidad de SMTP
+    EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+else:
+    EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+    EMAIL_HOST = os.environ["EMAIL_HOST"]
+    EMAIL_PORT = 587
+    EMAIL_USE_TLS = True
+    EMAIL_HOST_USER = os.environ["EMAIL_HOST_USER"]
+    EMAIL_HOST_PASSWORD = os.environ["EMAIL_HOST_PASSWORD"]
 
+    
 AUTH_USER_MODEL = 'api.UsuarioModel'
+
 # Internationalization
 # https://docs.djangoproject.com/en/6.0/topics/i18n/
 

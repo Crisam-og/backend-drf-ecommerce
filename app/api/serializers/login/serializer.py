@@ -1,7 +1,6 @@
 from rest_framework import serializers
 from api.models.user.models import UsuarioModel, ClienteUsuarioModel
 from django.db import transaction
-from django.shortcuts import get_object_or_404
 
 class LoginSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True)
