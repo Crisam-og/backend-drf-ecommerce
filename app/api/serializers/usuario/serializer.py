@@ -7,6 +7,7 @@ from api.views.resetpassword.views import enviar_enlace_password
 from api.models.user.models import AdministradorModel, ClienteUsuarioModel, UsuarioModel
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
+from rest_framework.exceptions import PermissionDenied
 
 
 class BaseRegistroSerializer(serializers.ModelSerializer):
@@ -305,21 +306,55 @@ class AdminActualizacionSerializer(serializers.ModelSerializer):
                             "incluye permisos que tú no tienes."
                         )
         return value
- 
+    def validate(self, attrs):
+        # Solo un superusuario puede modificar a otro superusuario
+        request = self.context.get("request")
+        if (
+            request
+            and self.instance
+            and self.instance.is_superuser
+            and not request.user.is_superuser
+        ):
+            raise PermissionDenied("Solo un superusuario puede modificar a otro superusuario.")
+        return attrs
     def validate_is_active(self, value):
         request = self.context.get("request")
+
+        # No puedes desactivar tu propia cuenta
         if request and self.instance == request.user and value is False:
             raise serializers.ValidationError("No puedes desactivar tu propia cuenta.")
+
+        # Siempre debe quedar al menos un superusuario activo
+        if value is False and self.instance and self.instance.is_superuser:
+            quedan_otros = (
+                UsuarioModel.objects.filter(is_superuser=True, is_active=True)
+                .exclude(pk=self.instance.pk)
+                .exists()
+            )
+            if not quedan_otros:
+                raise serializers.ValidationError(
+                    "No puedes desactivar al único superusuario activo."
+                )
         return value
  
     @transaction.atomic
     def update(self, instance, validated_data):
         perfil_data = validated_data.pop("perfil_admin", {})
         groups = validated_data.pop("groups", None)
- 
+
         _aplicar_cambios(instance, validated_data)
+
         if perfil_data:
-            _aplicar_cambios(instance.perfil_admin, perfil_data)
+            if instance.tipo_usuario != UsuarioModel.TipoUsuario.ADMIN:
+                raise serializers.ValidationError(
+                    {"departamento": "Solo los administradores tienen departamento."}
+                )
+            # update_or_create también cubre cuentas creadas sin perfil
+            perfil, _ = AdministradorModel.objects.update_or_create(
+                user=instance, defaults=perfil_data
+            )
+            instance.perfil_admin = perfil  # refresca la caché para la respuesta
+
         if groups is not None:
             instance.groups.set(groups)
         return instance

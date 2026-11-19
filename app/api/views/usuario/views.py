@@ -52,6 +52,7 @@ class UserDetail(generics.RetrieveAPIView):
 class UpdateUserApi(generics.UpdateAPIView):
     queryset = UsuarioModel.objects.all()
     serializer_class = AdminActualizacionSerializer
+    #permission_classes = [EsAdministrador, DjangoModelPermissions]
 
 class GrupoListView(generics.ListAPIView):
     queryset = Group.objects.all().order_by("name")

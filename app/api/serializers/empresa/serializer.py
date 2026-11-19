@@ -5,14 +5,15 @@ from django.db import transaction
 class EmpresaSerializer(serializers.ModelSerializer):
     class Meta:
         model = EmpresaModel
-        fields = ('nombre', 'telefono', 'correo', 'direccion', 'url_whatsapp', 'logo')
+        fields = ('nombre','ruc', 'telefono', 'correo', 'direccion', 'url_whatsapp', 'logo')
 
 class EmpresaCreateUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = EmpresaModel
-        fields = ('nombre', 'telefono', 'correo', 'direccion', 'url_whatsapp', 'logo')
+        fields = ('nombre', 'ruc','telefono', 'correo', 'direccion', 'url_whatsapp', 'logo')
         extra_kwargs = {
             'nombre': {'required': True},
+            'ruc': {'required': True},
             'telefono': {'required': True},
             'correo': {'required': True},
             'direccion': {'required': True},

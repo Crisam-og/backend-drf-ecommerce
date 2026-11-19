@@ -14,6 +14,15 @@ from api.models.user.BasePermission import EsAdministrador  # ajusta la ruta a d
 
 def datos_usuario(user):
     """Datos que el frontend necesita para armar la sesión."""
+    print("El usuario que accedio es:", user.first_name)
+    
+    grupo = ""
+    
+    if user.is_superuser == True:
+        grupo = "Super Usuario"
+    else:
+        grupo = user.groups.first().name
+    print(f"El grupo del usuario logueado es: ", grupo)
     return {
         "user_id": str(user.user_id),
         "email": user.email,
@@ -21,8 +30,11 @@ def datos_usuario(user):
         "last_name": user.last_name,
         "tipo_usuario": user.tipo_usuario,
         "is_superuser": user.is_superuser,
+        "groups": grupo,
+        
         # Formato "app_label.codename", p. ej. "tuapp.add_producto"
         "permisos": sorted(user.get_all_permissions()),
+        #"grupos": user.groups.first().name
     }
 
 
@@ -53,6 +65,7 @@ class BaseLoginSerializer(TokenObtainPairSerializer):
             raise AuthenticationFailed("Credenciales inválidas.")
 
         data["user"] = datos_usuario(self.user)
+        print(f"El usuario que ingreso es:", data)
         return data
 
 

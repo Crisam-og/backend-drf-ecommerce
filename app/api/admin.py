@@ -2,7 +2,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.forms import UserChangeForm, UserCreationForm
-from api.models.producto.models import ProductoModel, CategoriaModel
+from api.models.producto.models import ProductoModel, CategoriaModel, ProductoPresentacionModel
 from api.models.user.models import AdministradorModel, ClienteUsuarioModel, UsuarioModel
 
 #admin.site.register(UsuarioModel)
@@ -10,6 +10,7 @@ from api.models.user.models import AdministradorModel, ClienteUsuarioModel, Usua
 #admin.site.register(AdministradorModel)
 admin.site.register(ProductoModel)
 admin.site.register(CategoriaModel)
+admin.site.register(ProductoPresentacionModel)
 # admin.site.register(ClienteUsuarioModel)
 # admin.site.register(AdministradorModel)
 # ---------------------------------------------------------------------------

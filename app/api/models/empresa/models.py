@@ -15,10 +15,14 @@ from solo.models import SingletonModel
 class EmpresaModel(SingletonModel):
     #empresa_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     nombre = models.CharField(max_length=50)
+    ruc = models.CharField(max_length=11, blank=True, null=True)
     telefono = models.CharField(max_length=9)
     correo = models.EmailField()
     direccion = models.CharField(max_length=150)
     url_whatsapp = models.URLField()
+    url_facebook = models.URLField(blank=True, null=True)
+    url_instagram = models.URLField(blank=True, null=True)
+    url_logo = models.URLField(blank=True, null=True)
     logo = models.ImageField(upload_to='logos/', blank=True, null=True)
     
     #objects = EmpresaManager()

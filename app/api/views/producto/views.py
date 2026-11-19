@@ -1,9 +1,11 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework import status, generics, filters
 from rest_framework.pagination import PageNumberPagination
-from api.serializers.producto.serializer import ProductoSerializer, RegistroProductoSerializer, ActualizarProductoSerializer
-from api.models.producto.models import ProductoModel
+from api.serializers.producto.serializer import ProductoSerializer, RegistroProductoSerializer, ActualizarProductoSerializer, ProdPresentSerializer, CreateProdPresentSerializer, UpdateProdPresentSerializer
+from api.models.producto.models import ProductoModel, ProductoPresentacionModel
+from rest_framework.permissions import AllowAny
+#from api.views.login.views import datos_usuario
 
 class RegistroProductoApi(APIView):
     def post(self, request):
@@ -13,13 +15,15 @@ class RegistroProductoApi(APIView):
             return Response(ProductoSerializer(producto).data, status=status.HTTP_201_CREATED)
         print("Errores de validación:", serializer.errors)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
 
+   
 class ListarProductosApi(APIView):
+    # admin = AdminMeView.get()
+    # print(f"Admin en listado es:", admin)
     def get(self, request):
         productos = ProductoModel.objects.order_by('nombre')
         search_query = request.query_params.get('search', None)
-        
+       
         if search_query:
             productos = productos.filter(nombre__icontains=search_query)
 
@@ -73,6 +77,41 @@ class DetalleProductoApi(APIView):
         serializer = ProductoSerializer(producto)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+class ProdPresentPagination(PageNumberPagination):
+    page_size = 5
+    page_size_query_param = 'page_size'
+    max_page_size = 100
+
+    # Opcional: Personaliza la estructura de la respuesta si quieres mantener tu formato exacto
+    def get_paginated_response(self, data):
+        print(data)
+        return Response({
+            'message': 'Lista de presentaciones obtenida exitosamente.',
+            'data': data,
+            'total_presentaciones': self.page.paginator.count,
+            'page': self.page.number,
+            'page_size': self.get_page_size(self.request),
+            'total_paginas': self.page.paginator.num_pages,
+            'next': self.get_next_link(),
+            'previous': self.get_previous_link(),
+        }, status=status.HTTP_200_OK)
+    
+class ListarProdPresentApi(generics.ListCreateAPIView):
+    queryset = ProductoPresentacionModel.objects.all()
+    pagination_class = ProdPresentPagination
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['nombre']   
+    serializer_class = ProdPresentSerializer
+
+class CreateProdPresentApi(generics.CreateAPIView):
+    queryset = ProductoPresentacionModel.objects.all()
+    serializer_class= CreateProdPresentSerializer
+    #authentication_classes = []
+    #permission_classes = [AllowAny]
+
+class UpdateProdPresentApi(generics.UpdateAPIView):
+    queryset = ProductoPresentacionModel.objects.all()
+    serializer_class= UpdateProdPresentSerializer
 
 # class RegistroCategoriaApi(APIView):
 #     def post(self, request):

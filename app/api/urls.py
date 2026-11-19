@@ -4,9 +4,11 @@ from django.contrib import admin
 from api.views.usuario.views import RegistroClienteView,RegistroAdminView, UserListApi, UserDetail, UpdateUserApi, GrupoListView
 from rest_framework_simplejwt.views import TokenRefreshView
 from api.views.login.views import AdminLoginView, ClienteLoginView, LogoutView, AdminMeView
-from api.views.producto.views import RegistroProductoApi, ActualizarProductoApi, ListarProductosApi, EliminarProductoApi, DetalleProductoApi
+from api.views.producto.views import RegistroProductoApi, ActualizarProductoApi, ListarProductosApi, EliminarProductoApi, DetalleProductoApi, CreateProdPresentApi, ListarProdPresentApi, UpdateProdPresentApi
 from api.views.categoria.views import ListarCategoriasApi, RegistroCategoriaApi, ActualizarCategoriaApi, DetalleCategoriaApi
 from api.views.empresa.views import EmpresaView
+from api.views.venta.views import VentaViewSet, ListarVentasApi
+from api.views.entradas.views import EntradaViewSet, ListarEntradasApi
 from django.conf import settings
 from django.contrib.staticfiles.urls import static
 from api.views.resetpassword.views import PasswordResetRequestView, PasswordResetConfirmView, PasswordResetValidateView
@@ -15,6 +17,8 @@ from api.views.permisos.views import RolViewSet, PermisoListView
 
 router = SimpleRouter()
 router.register("admin/roles", RolViewSet, basename="rol")
+router.register("admin/ventas", VentaViewSet, basename="venta")
+router.register("admin/entradas", EntradaViewSet, basename="entrada")
 urlpatterns = [
     path('registro/cliente/', RegistroClienteView.as_view(), name='registro-cliente'),
     # path('actualizar/cliente/<uuid:pk>/', ActualizarClienteView.as_view(), name='actualizar-cliente'),
@@ -34,6 +38,10 @@ urlpatterns = [
     path('producto/listar/', ListarProductosApi.as_view(), name='listar-productos'),
     path('producto/eliminar/<uuid:pk>/', EliminarProductoApi.as_view(), name='eliminar-producto'),
     path('producto/detalle/<uuid:pk>/', DetalleProductoApi.as_view(), name='detalle-producto'),
+    path('producto-presentacion/registro/', CreateProdPresentApi.as_view(), name='presentacion-producto-registro'),
+    path('producto-presentacion/actualizar/<uuid:pk>/', UpdateProdPresentApi.as_view(), name='presentacion-producto-actualizar'),
+    path('producto-presentacion/listar/', ListarProdPresentApi.as_view(), name='presentacion-producto-listar'),
+    
 
     #urls para categorias
     path('categoria/registro/', RegistroCategoriaApi.as_view(), name='registro-categoria'),
@@ -63,5 +71,10 @@ urlpatterns = [
     #Urls para permisos y roles
     path("admin/permisos/", PermisoListView.as_view()),
     path("", include(router.urls)),
+
+    #Urls para ventas
+    path("ventas/listar/", ListarVentasApi.as_view(), name="listar-ventas"),
+    #url para entradas
+    path("entradas/listar/", ListarEntradasApi.as_view(), name="listar-entradas"),
     
    ]+ static(settings.MEDIA_URL, document_root = settings.MEDIA_ROOT)
